@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# a script to read .pdb file and extract
+# unique amino acid 3 letters abbreviations
+# this is use for user to see what amino acids
+# are there in a .pdb file.
+
+# see script below for usage
+#
+if [ $# -ne 1 ]; then
+    echo 'usage: <probe_aa.sh> <original raw pdb file to parse>'
+    exit 0
+fi
+
+
+# extract the lines of atomic configuration
+# replace HETATM by ATOM
+cat $1 | sed s/HETATM/"ATOM  "/g > log_tmp.log
+cat log_tmp.log | grep ATOM > log_tmp1.log
+cat log_tmp1.log | awk '{print $4}' > log_tmp.log
+#
+echo "unique amino acids are"
+sort -u log_tmp.log
+
+rm log_tmp1.log log_tmp.log
+
