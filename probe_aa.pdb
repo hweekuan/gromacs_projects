@@ -1,26 +1,46 @@
 #!/bin/bash
-
-# a script to read .pdb file and extract
-# unique amino acid 3 letters abbreviations
-# this is use for user to see what amino acids
-# are there in a .pdb file.
-
-# see script below for usage
 #
+# probe_aa.pdb - Identify unique amino acids in a PDB file.
+#
+# NOTE: This file is a bash script but has a .pdb extension — see bug report.
+#       It should be renamed to probe_aa.sh for clarity.
+#
+# This utility script parses a PDB file and extracts all unique 3-letter
+# amino acid codes. Useful for inspecting protein composition before running
+# MD simulations, especially to identify non-standard residues that may need
+# conversion (see search_split_rename.sh).
+#
+# Usage:
+#   ./probe_aa.pdb <input_file.pdb>
+#
+# Example:
+#   ./probe_aa.pdb trpcage001.pdb
+#   Output: sorted list of unique amino acid codes (e.g., ASN, ASP, GLY, ...)
+#
+
+# Validate that exactly 1 argument is provided
 if [ $# -ne 1 ]; then
     echo 'usage: <probe_aa.sh> <original raw pdb file to parse>'
     exit 0
 fi
 
 
-# extract the lines of atomic configuration
-# replace HETATM by ATOM
+# ---- Step 1: Normalize HETATM records ----
+# Convert HETATM to ATOM so that non-standard residues are included in the
+# amino acid extraction. Pad "ATOM  " to 6 chars to preserve PDB column format.
 cat $1 | sed s/HETATM/"ATOM  "/g > log_tmp.log
+
+# ---- Step 2: Filter and extract amino acid names ----
+# grep ATOM: Keep only coordinate record lines (ATOM/HETATM)
+# awk '{print $4}': Extract column 4, which holds the 3-letter residue name
+#                    in standard PDB format
 cat log_tmp.log | grep ATOM > log_tmp1.log
 cat log_tmp1.log | awk '{print $4}' > log_tmp.log
-#
+
+# ---- Step 3: Print sorted unique amino acid codes ----
 echo "unique amino acids are"
 sort -u log_tmp.log
 
+# Clean up temporary files
 rm log_tmp1.log log_tmp.log
 
